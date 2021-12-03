@@ -1,9 +1,11 @@
 package com.example.unusuallycomposedlist.view
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -17,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -29,6 +30,7 @@ import com.example.unusuallycomposedlist.theme.AppTheme
 import com.example.unusuallycomposedlist.theme.primaryVariantLight
 import com.example.unusuallycomposedlist.theme.secondaryLight
 import com.example.unusuallycomposedlist.viewModel.MainViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -50,75 +52,73 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun UnusualList() {
         val itemsList by mainViewModel.itemsList.observeAsState(listOf())
-        val verticalTextFontSize = 50.sp
+        var horizontalListWidth by remember { mutableStateOf(1) }//1 to avoid crash on division
+        var verticalListHeight by remember { mutableStateOf(1) }
+        val coroutineScope = rememberCoroutineScope()
 
         Box(Modifier.fillMaxSize()) {
             ItemsSnapHelper(
                 isScrollingHorizontally = true,
-                contents = { listState ->
-                    LazyRow(modifier = Modifier.fillMaxSize(), state = listState) {
+                contents = { horizontalListState ->
+                    mainViewModel.scrollOffsetPerc.value =
+                        (horizontalListState.firstVisibleItemScrollOffset * 100) / horizontalListWidth
+
+                    LazyRow(modifier = Modifier.fillMaxSize(), state = horizontalListState) {
                         itemsIndexed(itemsList) { _, item ->
-                            Box(modifier = Modifier.fillParentMaxSize()) {
-                                HorizontalItem(item)
+                            Box(modifier = Modifier
+                                .fillParentMaxSize()
+                                .onGloballyPositioned {
+                                    horizontalListWidth = it.size.width
+                                }
+                            ) {
+                                HorizontalItem(mainViewModel.scrollOffsetPerc.value.toString())
                             }
                         }
                     }
                 }
             )
 
-            LazyColumn(modifier = Modifier.fillMaxHeight()) {
-                itemsIndexed(itemsList) { _, item ->
-                    var verticalTextHeight by remember { mutableStateOf(0) }
-                    var verticalTextWidth by remember { mutableStateOf(0) }
+            //val verticalListState = rememberLazyListState()
+            ItemsSnapHelper(
+                isScrollingHorizontally = false,
+                contents = { verticalListState ->
 
-                    Box(modifier = Modifier.fillParentMaxHeight()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .width(100.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Box(modifier = Modifier
-                                .rotate(-90f)
-                                .requiredWidth(verticalTextHeight.dp)
-                                .onGloballyPositioned {
-                                    verticalTextHeight = it.size.height
-                                    verticalTextWidth = it.size.width
-                                }) {
-                                Text(
-                                    text = item,
-                                    color = primaryVariantLight,
-                                    fontSize = verticalTextFontSize,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
+                    mainViewModel.scrollOffsetPerc.observe(this@MainActivity) { perc ->
+                        coroutineScope.launch {
+                            //val currScrollPx = verticalListState.firstVisibleItemScrollOffset
+                            verticalListState.layoutInfo.visibleItemsInfo.firstOrNull()
+                                ?.let { firstVisibleItem ->
+                                    val verticalScrollPx = ((perc * verticalListHeight) / 100f)
+                                    val currScrollPx = verticalListState.firstVisibleItemScrollOffset
+                                    Log.d(
+                                        "TAG",
+                                        "[$perc][${firstVisibleItem.index}] verticalScrollPx:$verticalScrollPx currScrollPx:$currScrollPx => ${verticalScrollPx - currScrollPx}"
+                                    )
+                                    verticalListState.scrollBy(verticalScrollPx - currScrollPx)
+                                }
+                        }
+                    }
+
+                    LazyColumn(modifier = Modifier.fillMaxHeight(), state = verticalListState) {
+                        itemsIndexed(itemsList) { _, item ->
+                            var textContainerHeight by remember { mutableStateOf(0) }
+
+                            BoxWithConstraints(modifier = Modifier
+                                .fillParentMaxHeight()
+                                .onGloballyPositioned { verticalListHeight = it.size.height }
+                            ) {
+                                VerticalItem(
+                                    modifier = Modifier.onGloballyPositioned {
+                                        textContainerHeight = it.size.height
+                                    },
+                                    item = item,
+                                    textContainerHeight = textContainerHeight
                                 )
                             }
                         }
-                        /*
-                        Box(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .requiredWidth(100.dp)
-                                .background(Color.Green)
-                        ) {
-                            Text(
-                                modifier = Modifier
-                                    .rotate(-90f)
-                                    .offset { IntOffset(-verticalTextWidth / 2, 0) }
-                                    .padding(vertical = 20.dp)
-                                    .onGloballyPositioned {
-                                        verticalTextWidth = it.size.height
-                                    },
-                                text = item,
-                                color = primaryVariantLight,
-                                fontSize = verticalTextFontSize,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                         */
                     }
                 }
-            }
+            )
         }
     }
 
@@ -132,6 +132,30 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(text = item)
+        }
+    }
+
+    @Composable
+    fun VerticalItem(modifier: Modifier, item: String, textContainerHeight: Int) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(100.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = modifier
+                    .rotate(-90f)
+                    .requiredWidth(textContainerHeight.dp)
+            ) {
+                Text(
+                    text = item,
+                    color = primaryVariantLight,
+                    fontSize = 50.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
+            }
         }
     }
 
