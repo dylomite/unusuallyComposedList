@@ -13,8 +13,9 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 
 @Composable
-fun ItemsSnapHelper(contents: @Composable (LazyListState) -> Unit) {
+fun ItemsSnapHelper(isScrollingHorizontally: Boolean, contents: @Composable (LazyListState) -> Unit) {
     var containerWidthPx by remember { mutableStateOf(0) }
+    var containerHeightPx by remember { mutableStateOf(0) }
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val nestedScrollConnection = remember {
@@ -22,7 +23,12 @@ fun ItemsSnapHelper(contents: @Composable (LazyListState) -> Unit) {
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
                 listState.layoutInfo.visibleItemsInfo.firstOrNull()
                     ?.let { firstVisibleItemInfo ->
-                        val pos = if (abs(firstVisibleItemInfo.offset) <= containerWidthPx / 2) {
+                        val halfwayLimit = if (isScrollingHorizontally) {
+                            containerWidthPx / 2
+                        } else {
+                            containerHeightPx / 2
+                        }
+                        val pos = if (abs(firstVisibleItemInfo.offset) <= halfwayLimit) {
                             firstVisibleItemInfo.index
                         } else {
                             firstVisibleItemInfo.index + 1
@@ -36,6 +42,7 @@ fun ItemsSnapHelper(contents: @Composable (LazyListState) -> Unit) {
 
     BoxWithConstraints(modifier = Modifier.nestedScroll(nestedScrollConnection)) {
         containerWidthPx = with(LocalDensity.current) { maxWidth.toPx() }.toInt()
+        containerHeightPx = with(LocalDensity.current) { maxHeight.toPx() }.toInt()
         contents(listState)
     }
 }
