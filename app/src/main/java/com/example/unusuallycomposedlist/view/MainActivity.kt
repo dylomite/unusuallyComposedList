@@ -4,10 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
@@ -22,7 +21,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.ViewModelProvider
 import com.example.unusuallycomposedlist.theme.AppTheme
-import com.example.unusuallycomposedlist.theme.primaryLight
+import com.example.unusuallycomposedlist.theme.secondaryLight
 import com.example.unusuallycomposedlist.viewModel.MainViewModel
 
 class MainActivity : ComponentActivity() {
@@ -34,22 +33,53 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             AppTheme {
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .background(primaryLight)
-                ) {
-                    UnusualList()
-                    LoadingDialog()
-                }
+                UnusualList()
+                LoadingDialog()
             }
         }
 
         mainViewModel.generateItemsList()
     }
+
     @Composable
-    fun UnusualList(){
-        Text("Ayy Lmao")
+    fun UnusualList() {
+        val itemsList by mainViewModel.itemsList.observeAsState(listOf())
+        Row(Modifier.fillMaxSize()) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(100.dp)
+                    .background(Color.Green)
+            ) {
+
+            }
+            ItemsSnapHelper(
+                contents = { listState ->
+                    LazyRow(modifier = Modifier.fillMaxSize(), state = listState) {
+                        itemsIndexed(itemsList) { _, item ->
+                            Box(modifier = Modifier.fillParentMaxSize()) {
+                                HorizontalItem(item)
+                            }
+                        }
+                    }
+                }
+            )
+        }
+    }
+
+    @Composable
+    fun HorizontalItem(item: String) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(20.dp)
+                .background(secondaryLight),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(text = item)
+        }
     }
 
     @Composable

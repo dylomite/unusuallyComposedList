@@ -15,7 +15,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun generateItemsList(){
         viewModelScope.launch {
             isLoading.postValue(true)
-            delay(1500)
             itemsList.postValue(
                 listOf(
                     "AYY",
