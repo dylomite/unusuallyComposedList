@@ -11,7 +11,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     val isLoading = MutableLiveData(false)
     val itemsList = MutableLiveData<List<String>>(mutableListOf())
-    val scrollOffsetPerc = MutableLiveData(0)
 
     fun generateItemsList(){
         viewModelScope.launch {
@@ -20,6 +19,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 listOf(
                     "AYY",
                     "LMAO!",
+                    "LMAO1",
+                    "LMAO2",
+                    "LMAO3",
                 )
             )
             isLoading.postValue(false)

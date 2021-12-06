@@ -1,11 +1,9 @@
 package com.example.unusuallycomposedlist.view
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,7 +28,6 @@ import com.example.unusuallycomposedlist.theme.AppTheme
 import com.example.unusuallycomposedlist.theme.primaryVariantLight
 import com.example.unusuallycomposedlist.theme.secondaryLight
 import com.example.unusuallycomposedlist.viewModel.MainViewModel
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -52,61 +49,37 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun UnusualList() {
         val itemsList by mainViewModel.itemsList.observeAsState(listOf())
-        var horizontalListWidth by remember { mutableStateOf(1) }//1 to avoid crash on division
-        var verticalListHeight by remember { mutableStateOf(1) }
-        val coroutineScope = rememberCoroutineScope()
+        var horizontalScrollOffsetPerc by remember { mutableStateOf(0f) }
+        var horizontalPos by remember { mutableStateOf(0) }
 
         Box(Modifier.fillMaxSize()) {
+
             ItemsSnapHelper(
                 isScrollingHorizontally = true,
+                onScroll = { scrollPerc, pos ->
+                    horizontalScrollOffsetPerc = scrollPerc
+                    horizontalPos = pos
+                },
                 contents = { horizontalListState ->
-                    mainViewModel.scrollOffsetPerc.value =
-                        (horizontalListState.firstVisibleItemScrollOffset * 100) / horizontalListWidth
-
                     LazyRow(modifier = Modifier.fillMaxSize(), state = horizontalListState) {
                         itemsIndexed(itemsList) { _, item ->
-                            Box(modifier = Modifier
-                                .fillParentMaxSize()
-                                .onGloballyPositioned {
-                                    horizontalListWidth = it.size.width
-                                }
-                            ) {
-                                HorizontalItem(mainViewModel.scrollOffsetPerc.value.toString())
+                            Box(modifier = Modifier.fillParentMaxSize()) {
+                                HorizontalItem(horizontalScrollOffsetPerc.toString())
                             }
                         }
                     }
                 }
             )
 
-            //val verticalListState = rememberLazyListState()
-            ItemsSnapHelper(
-                isScrollingHorizontally = false,
+            VerticalListCoordinatedScrollImposer(
+                currScrollPerc = horizontalScrollOffsetPerc,
+                otherListCurrPos = horizontalPos,
                 contents = { verticalListState ->
-
-                    mainViewModel.scrollOffsetPerc.observe(this@MainActivity) { perc ->
-                        coroutineScope.launch {
-                            //val currScrollPx = verticalListState.firstVisibleItemScrollOffset
-                            verticalListState.layoutInfo.visibleItemsInfo.firstOrNull()
-                                ?.let { firstVisibleItem ->
-                                    val verticalScrollPx = ((perc * verticalListHeight) / 100f)
-                                    val currScrollPx = verticalListState.firstVisibleItemScrollOffset
-                                    Log.d(
-                                        "TAG",
-                                        "[$perc][${firstVisibleItem.index}] verticalScrollPx:$verticalScrollPx currScrollPx:$currScrollPx => ${verticalScrollPx - currScrollPx}"
-                                    )
-                                    verticalListState.scrollBy(verticalScrollPx - currScrollPx)
-                                }
-                        }
-                    }
 
                     LazyColumn(modifier = Modifier.fillMaxHeight(), state = verticalListState) {
                         itemsIndexed(itemsList) { _, item ->
                             var textContainerHeight by remember { mutableStateOf(0) }
-
-                            BoxWithConstraints(modifier = Modifier
-                                .fillParentMaxHeight()
-                                .onGloballyPositioned { verticalListHeight = it.size.height }
-                            ) {
+                            BoxWithConstraints(modifier = Modifier.fillParentMaxHeight()) {
                                 VerticalItem(
                                     modifier = Modifier.onGloballyPositioned {
                                         textContainerHeight = it.size.height
