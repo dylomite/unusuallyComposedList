@@ -1,8 +1,10 @@
 package com.example.unusuallycomposedlist.view
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -64,7 +67,7 @@ class MainActivity : ComponentActivity() {
                     LazyRow(modifier = Modifier.fillMaxSize(), state = horizontalListState) {
                         itemsIndexed(itemsList) { _, item ->
                             Box(modifier = Modifier.fillParentMaxSize()) {
-                                HorizontalItem(horizontalScrollOffsetPerc.toString())
+                                FullScreenPicture(bitmap = item.image)
                             }
                         }
                     }
@@ -75,16 +78,15 @@ class MainActivity : ComponentActivity() {
                 currScrollPerc = horizontalScrollOffsetPerc,
                 otherListCurrPos = horizontalPos,
                 contents = { verticalListState ->
-
                     LazyColumn(modifier = Modifier.fillMaxHeight(), state = verticalListState) {
                         itemsIndexed(itemsList) { _, item ->
                             var textContainerHeight by remember { mutableStateOf(0) }
                             BoxWithConstraints(modifier = Modifier.fillParentMaxHeight()) {
-                                VerticalItem(
+                                VerticalText(
                                     modifier = Modifier.onGloballyPositioned {
                                         textContainerHeight = it.size.height
                                     },
-                                    item = item,
+                                    text = item.title,
                                     textContainerHeight = textContainerHeight
                                 )
                             }
@@ -96,7 +98,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun HorizontalItem(item: String) {
+    fun FullScreenPicture(bitmap: Bitmap) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -104,12 +106,15 @@ class MainActivity : ComponentActivity() {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = item)
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null
+            )
         }
     }
 
     @Composable
-    fun VerticalItem(modifier: Modifier, item: String, textContainerHeight: Int) {
+    fun VerticalText(modifier: Modifier, text: String, textContainerHeight: Int) {
         Box(
             modifier = Modifier
                 .fillMaxHeight()
@@ -122,7 +127,7 @@ class MainActivity : ComponentActivity() {
                     .requiredWidth(textContainerHeight.dp)
             ) {
                 Text(
-                    text = item,
+                    text = text,
                     color = primaryVariantLight,
                     fontSize = 50.sp,
                     fontWeight = FontWeight.Bold,
