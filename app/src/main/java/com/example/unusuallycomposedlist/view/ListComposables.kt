@@ -86,6 +86,7 @@ fun ItemsSnapHelper(
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun VerticalListCoordinatedScrollImposer(
+    modifier: Modifier=Modifier,
     currScrollPerc: Float,
     otherListCurrPos: Int,
     contents: @Composable (LazyListState) -> Unit
@@ -103,7 +104,7 @@ fun VerticalListCoordinatedScrollImposer(
         coroutineScope.launch { verticalListState.scrollToItem(otherListCurrPos) }
     }
 
-    BoxWithConstraints {
+    BoxWithConstraints(modifier = modifier) {
         containerHeightPx = with(LocalDensity.current) { maxHeight.toPx() }.toInt()
         contents(verticalListState)
     }
