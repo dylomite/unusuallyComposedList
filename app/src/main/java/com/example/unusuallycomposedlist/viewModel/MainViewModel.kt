@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.example.unusuallycomposedlist.R
 import com.example.unusuallycomposedlist.model.ImageItemModel
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -29,10 +28,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             isLoading.postValue(true)
             itemsList.postValue(
                 listOf(
-                    ImageItemModel("SOME", getBitmapFromAsset(context,"auronzo1.jpeg")),
-                    ImageItemModel("NICE", getBitmapFromAsset(context,"dobiacco2.jpeg")),
-                    ImageItemModel("LANDSCAPES", getBitmapFromAsset(context,"pasubio2.jpeg")),
-                    ImageItemModel("MOO!", getBitmapFromAsset(context,"siusi1.jpeg")),
+                    ImageItemModel("SOME", getBitmapFromAsset(context, "auronzo.jpeg")),
+                    ImageItemModel("BEAUTIFUL", getBitmapFromAsset(context, "dobiacco.jpeg")),
+                    ImageItemModel("LANDSCAPES", getBitmapFromAsset(context, "pasubio.jpeg")),
+                    ImageItemModel("MOO!", getBitmapFromAsset(context, "siusi.jpeg")),
                 )
             )
             isLoading.postValue(false)

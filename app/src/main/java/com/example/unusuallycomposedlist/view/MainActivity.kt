@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -17,7 +16,6 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
@@ -39,7 +37,6 @@ class MainActivity : ComponentActivity() {
 
     private val mainViewModel by lazy { ViewModelProvider(this).get(MainViewModel::class.java) }
 
-    @ExperimentalComposeUiApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -53,7 +50,6 @@ class MainActivity : ComponentActivity() {
         mainViewModel.generateItemsList(this)
     }
 
-    @ExperimentalComposeUiApi
     @Composable
     fun UnusualList() {
         val itemsList by mainViewModel.itemsList.observeAsState(listOf())
